@@ -7,6 +7,7 @@ It exposes only:
 """
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import json
 import os
 import re
 import time
@@ -41,7 +42,25 @@ def _cors_origins():
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
-CORS(app, resources={r"/*": {"origins": _cors_origins()}})
+ALLOWED_ORIGINS = [
+    "https://souldesha.de",
+    "https://www.souldesha.de",
+]
+CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}}, supports_credentials=False)
+
+@app.after_request
+def add_cors_headers(response):
+    origin = request.headers.get("Origin", "")
+    if origin in ALLOWED_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Vary"] = "Origin"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Accept"
+    return response
+
+@app.route("/domain-check", methods=["OPTIONS"])
+def domain_check_options():
+    return ("", 204)
 
 
 def _ascii_name(value):
@@ -137,6 +156,11 @@ def health():
 @app.post("/domain-check")
 def domain_check():
     data = request.get_json(silent=True) or {}
+    if not data and request.data:
+        try:
+            data = json.loads(request.data.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            data = {}
     try:
         names = _validated_names(data.get("names", []))
     except ValueError as exc:
