@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: open-name-domain-checker
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --workers 1 --threads 4 --timeout 120 app:app
+    envVars:
+      - key: CORS_ORIGINS
+        sync: false
