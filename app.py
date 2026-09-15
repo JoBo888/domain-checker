@@ -17,7 +17,6 @@ import urllib.parse
 import urllib.request
 
 from flask import Flask, jsonify, request
-from flask_cors import CORS
 
 app = Flask(__name__)
 
@@ -46,7 +45,6 @@ ALLOWED_ORIGINS = [
     "https://souldesha.de",
     "https://www.souldesha.de",
 ]
-CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}}, supports_credentials=False)
 
 @app.after_request
 def add_cors_headers(response):
